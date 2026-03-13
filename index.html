@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giải mã ô chữ GenZ</title>
+    <style>
+        :root {
+            --bg-color: #050a1f;
+            --neon-blue: #00ffff;
+            --neon-purple: #ff00ff;
+            --btn-blue: #0055ff;
+            --btn-active: #0033aa;
+            --yellow: #ffcc00;
+            --orange: #ffa500;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Titles */
+        .neon-title {
+            text-align: center;
+            color: #fff;
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px var(--neon-blue), 0 0 40px var(--neon-blue);
+            margin-top: 30px;
+            margin-bottom: 5px;
+            font-size: 2.8rem;
+            padding: 0 20px;
+        }
+
+        .neon-subtitle {
+            text-align: center;
+            color: var(--neon-purple);
+            text-shadow: 0 0 5px var(--neon-purple), 0 0 10px var(--neon-purple), 0 0 20px #cc00cc;
+            margin-top: 0;
+            margin-bottom: 40px;
+            font-size: 1.5rem;
+            padding: 0 20px;
+        }
+
+        /* Game Board Container */
+        .game-board {
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 150px; /* Space for fixed bottom section */
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 10px;
+        }
+
+        /* Zig-zag classes */
+        .zz-0 { justify-content: flex-start; padding-left: 2%; }
+        .zz-1 { justify-content: center; }
+        .zz-2 { justify-content: flex-end; padding-right: 5%; }
+        .zz-3 { justify-content: flex-start; padding-left: 15%; }
+        .zz-4 { justify-content: center; padding-right: 10%; }
+
+        .question-btn {
+            background: var(--btn-blue);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--btn-active), 0 0 10px var(--btn-blue);
+            min-width: 110px;
+            text-align: center;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .question-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 var(--btn-active), 0 0 5px var(--btn-blue);
+        }
+
+        .letters {
+            display: flex;
+            gap: 6px;
+        }
+
+        .letter-box {
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--neon-blue);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 5px var(--neon-blue);
+            box-shadow: inset 0 0 10px rgba(0, 255, 255, 0.2), 0 4px 6px rgba(0,0,0,0.5);
+            text-transform: uppercase;
+        }
+
+        .letter-box.yellow {
+            background: var(--yellow);
+            border-color: #ffaa00;
+            color: #000;
+            text-shadow: none;
+            box-shadow: inset 0 0 10px rgba(255, 204, 0, 0.5), 0 4px 6px rgba(0,0,0,0.5);
+        }
+
+        /* Keyword Section (Bottom Right) */
+        .keyword-section {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .hint-text {
+            color: #fff;
+            text-shadow: 0 0 5px var(--neon-blue);
+            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--neon-blue);
+            max-width: 350px;
+            text-align: right;
+        }
+
+        .guess-btn {
+            background: var(--orange);
+            color: #0000ff;
+            font-weight: 900;
+            font-size: 1.2rem;
+            padding: 15px 35px;
+            border: 2px solid #fff;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(255, 165, 0, 0.6), inset 0 2px 5px rgba(255,255,255,0.8);
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .guess-btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 0 5px rgba(255, 165, 0, 0.6), inset 0 1px 2px rgba(255,255,255,0.8);
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--bg-color);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 25px var(--neon-blue);
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        .close-btn:hover { color: #ff0055; }
+
+        .modal-title {
+            color: var(--neon-blue);
+            font-size: 1.5rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        .modal-question {
+            font-size: 1.2rem;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        .input-box {
+            width: 80%;
+            padding: 12px;
+            font-size: 1.2rem;
+            border: 2px solid var(--btn-blue);
+            border-radius: 8px;
+            background: #111;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+        }
+        .input-box:focus {
+            outline: none;
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        .submit-btn {
+            background: #00cc00;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #008800;
+            transition: transform 0.1s;
+        }
+        .submit-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #008800;
+        }
+
+        /* Alert Modal */
+        #alertModal .modal-content {
+            border-color: #ff0055;
+            box-shadow: 0 0 25px #ff0055;
+            max-width: 400px;
+        }
+        #alertModal .modal-title {
+            color: #ff0055;
+            font-size: 1.6rem;
+            margin-bottom: 10px;
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            top: -10px;
+            width: 12px;
+            height: 12px;
+            z-index: 9999;
+            animation: fall linear forwards;
+            opacity: 0.8;
+        }
+
+        @keyframes fall {
+            to { transform: translateY(110vh) rotate(720deg); }
+        }
+
+        @media (max-width: 768px) {
+            .letter-box { width: 35px; height: 35px; font-size: 20px; }
+            .neon-title { font-size: 2rem; }
+            .keyword-section { bottom: 15px; right: 15px; }
+            .hint-text { font-size: 0.9rem; max-width: 250px; }
+            .guess-btn { font-size: 1rem; padding: 10px 20px; }
+            .row { justify-content: flex-start !important; padding: 10px !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1 class="neon-title">Trò chơi Giải mã ô chữ GenZ</h1>
+    <h2 class="neon-subtitle">🧪 Trợ lí giảng dạy của Thầy Lê Nguyễn Cường 🧪</h2>
+
+    <div class="game-board" id="rows-container">
+        <!-- Rows will be injected here via JS -->
+    </div>
+
+    <div class="keyword-section">
+        <div class="hint-text">Gợi ý: Từ khóa là Tên của một nguyên tố thuộc nhóm IIA.</div>
+        <button class="guess-btn" onclick="openKeywordModal()">Đoán từ khóa</button>
+    </div>
+
+    <!-- Question Modal -->
+    <div class="modal-overlay" id="questionModal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('questionModal')">✖</button>
+            <h3 class="modal-title" id="modal-q-title">Câu ?</h3>
+            <div class="modal-question" id="modal-q-text">Nội dung câu hỏi...</div>
+            <input type="text" id="answer-input" class="input-box" placeholder="Nhập đáp án viết liền không dấu..." autocomplete="off">
+            <button class="submit-btn" onclick="checkAnswer()">XÁC NHẬN</button>
+        </div>
+    </div>
+
+    <!-- Guess Keyword Modal -->
+    <div class="modal-overlay" id="keywordModal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('keywordModal')">✖</button>
+            <h3 class="modal-title" style="color: var(--orange);">Đoán Từ Khóa</h3>
+            <div class="modal-question">Nhập từ khóa gồm 9 chữ cái:</div>
+            <input type="text" id="keyword-input" class="input-box" placeholder="Nhập từ khóa..." autocomplete="off">
+            <button class="submit-btn" style="background: var(--orange); box-shadow: 0 4px 0 #cc8400;" onclick="checkKeyword()">Kiểm tra</button>
+        </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div class="modal-overlay" id="alertModal">
+        <div class="modal-content">
+            <h3 class="modal-title">Cảnh báo</h3>
+            <div class="modal-question" id="alert-text" style="font-weight: bold; margin-bottom: 0;">Bạn sai rồi! Cố gắng lên</div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            { id: 1, q: "Kim loại kiềm có thể dùng dao để cắt được, chứng tỏ kim loại kiềm rất _____. Từ trong chỗ trống là gì?", a: "MEM", keyIdx: 0 },
+            { id: 2, q: "Nguyên tố phổ biến nhất trong nhóm IIA, là thành phần chính cấu tạo nên vỏ trứng, san hô và hệ xương của con người?", a: "CALCIUM", keyIdx: 1 },
+            { id: 3, q: "Tính khử của kim loại kiềm sẽ _______dần từ Lithium đến Caesium. Từ trong chỗ trống là gì?", a: "TANG", keyIdx: 3 },
+            { id: 4, q: "Kim loại lithium là kim loại có khối lượng riêng _____nhất trong nhóm kim loại kiềm. Từ trong chỗ trống là gì?", a: "NHE", keyIdx: 0 },
+            { id: 5, q: "Trong nhóm IIA có một kim loại không phản ứng với nước ở bất kì nhiệt độ nào, kim loại đó là?", a: "BERYLLIUM", keyIdx: 1 },
+            { id: 6, q: "Nguyên tố nhóm II có kí hiệu hóa học là Sr. Tên của nguyên tố này là", a: "STRONTIUM", keyIdx: 0 },
+            { id: 7, q: "Các nguyên tử nhóm IIA có xu hướng nhường 2 electron để trở thành hạt mang điện dương gọi là gì?", a: "CATION", keyIdx: 3 },
+            { id: 8, q: "Tên của nguyên tố có kí hiệu hóa học Na là gì?", a: "SODIUM", keyIdx: 4 },
+            { id: 9, q: "Nguyên tử của nguyên tố nhóm IA có ______(điền chữ) electron ở lớp ngoài cùng. Từ trong chỗ trống là gì?", a: "MOT", keyIdx: 0 }
+        ];
+
+        let currentQuestionObj = null;
+
+        // Xáo trộn vị trí hiển thị (Fisher-Yates shuffle)
+        const shuffledQuestions = [...questions].sort(() => Math.random() - 0.5);
+
+        // Khởi tạo bảng trò chơi
+        function initGame() {
+            const container = document.getElementById('rows-container');
+            shuffledQuestions.forEach((q, index) => {
+                const row = document.createElement('div');
+                // Thêm class zig-zag để các ô màu vàng không thẳng đứng
+                row.className = `row zz-${index % 5}`;
+
+                const btn = document.createElement('button');
+                btn.className = 'question-btn';
+                btn.textContent = `Câu ${q.id}`;
+                btn.onclick = () => openQuestion(q.id);
+                row.appendChild(btn);
+
+                const lettersDiv = document.createElement('div');
+                lettersDiv.className = 'letters';
+                lettersDiv.id = `letters-${q.id}`;
+                
+                for(let i = 0; i < q.a.length; i++) {
+                    const box = document.createElement('div');
+                    box.className = 'letter-box' + (i === q.keyIdx ? ' yellow' : '');
+                    lettersDiv.appendChild(box);
+                }
+                row.appendChild(lettersDiv);
+                container.appendChild(row);
+            });
+        }
+
+        // Mở cửa sổ câu hỏi
+        function openQuestion(id) {
+            currentQuestionObj = questions.find(q => q.id === id);
+            document.getElementById('modal-q-title').innerText = `Câu ${currentQuestionObj.id}`;
+            document.getElementById('modal-q-text').innerText = currentQuestionObj.q;
+            const input = document.getElementById('answer-input');
+            input.value = '';
+            document.getElementById('questionModal').style.display = 'flex';
+            input.focus();
+        }
+
+        // Mở cửa sổ từ khóa
+        function openKeywordModal() {
+            const input = document.getElementById('keyword-input');
+            input.value = '';
+            document.getElementById('keywordModal').style.display = 'flex';
+            input.focus();
+        }
+
+        // Đóng các cửa sổ
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Hiển thị thông báo Alert (thay thế window.alert)
+        function showAlert(msg) {
+            document.getElementById('alert-text').innerText = msg;
+            document.getElementById('alertModal').style.display = 'flex';
+            setTimeout(() => {
+                closeModal('alertModal');
+            }, 2500);
+        }
+
+        // Chuẩn hóa chuỗi (bỏ dấu, viết hoa)
+        function normalizeString(str) {
+            return str.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/Đ/g, 'D').replace(/đ/g, 'D').toUpperCase();
+        }
+
+        // Xử lý kiểm tra đáp án từng câu
+        function checkAnswer() {
+            if (!currentQuestionObj) return;
+            const inputVal = document.getElementById('answer-input').value;
+            const normalizedInput = normalizeString(inputVal);
+
+            if (normalizedInput === currentQuestionObj.a) {
+                // Trả lời ĐÚNG
+                const lettersDiv = document.getElementById(`letters-${currentQuestionObj.id}`);
+                const boxes = lettersDiv.querySelectorAll('.letter-box');
+                
+                for (let i = 0; i < currentQuestionObj.a.length; i++) {
+                    // Xử lý yêu cầu đặc biệt: Ô vàng của câu 4 ẩn (hiện '?')
+                    if (currentQuestionObj.id === 4 && i === currentQuestionObj.keyIdx) {
+                        boxes[i].textContent = '?';
+                    } else {
+                        boxes[i].textContent = currentQuestionObj.a[i];
+                    }
+                }
+                speak("Chính xác! Bạn giỏi quá");
+                closeModal('questionModal');
+            } else {
+                // Trả lời SAI
+                playErrorSound();
+                speak("Sai rồi, bạn cố gắng lên nào");
+                showAlert("Bạn sai rồi! Cố gắng lên");
+            }
+        }
+
+        // Xử lý nút đoán từ khóa
+        function checkKeyword() {
+            const inputVal = document.getElementById('keyword-input').value;
+            const normalizedInput = normalizeString(inputVal);
+
+            if (normalizedInput === "MAGNESIUM") {
+                closeModal('keywordModal');
+                triggerConfetti();
+                speak("Chính xác! Bạn giỏi quá");
+            } else {
+                playErrorSound();
+                speak("Sai rồi, bạn cố gắng lên nào");
+                showAlert("Bạn sai rồi! Cố gắng lên nào");
+            }
+        }
+
+        // Lắng nghe sự kiện Enter cho các ô input
+        document.getElementById('answer-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') checkAnswer();
+        });
+        document.getElementById('keyword-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') checkKeyword();
+        });
+
+        // Web Speech API - Phát âm thanh Tiếng Việt
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // Xóa hàng đợi
+                const msg = new SpeechSynthesisUtterance(text);
+                msg.lang = 'vi-VN';
+                msg.rate = 1.0; 
+                msg.pitch = 1.0;
+                window.speechSynthesis.speak(msg);
+            }
+        }
+
+        // Web Audio API - Tạo âm thanh "te te" khi sai
+        function playErrorSound() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+                
+                const playTone = (freq, startTime, duration) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.type = 'square';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.05, startTime); // Âm lượng nhỏ
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+                    osc.start(startTime);
+                    osc.stop(startTime + duration);
+                };
+                
+                const now = ctx.currentTime;
+                playTone(400, now, 0.15);       // Tiếng "te" thứ 1
+                playTone(400, now + 0.2, 0.15); // Tiếng "te" thứ 2
+            } catch(e) {
+                console.error("Audio API không được hỗ trợ", e);
+            }
+        }
+
+        // Hiệu ứng pháo giấy (Tung bông hoa rực rỡ)
+        function triggerConfetti() {
+            const colors = ['#ffcc00', '#00ffff', '#ff00ff', '#00ff00', '#ff0000', '#ffa500'];
+            for(let i = 0; i < 120; i++) {
+                let conf = document.createElement('div');
+                conf.className = 'confetti';
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                // Random hình dạng (vuông, tròn)
+                if (Math.random() > 0.5) conf.style.borderRadius = '50%';
+                
+                // Random kích thước
+                const size = Math.random() * 10 + 5;
+                conf.style.width = size + 'px';
+                conf.style.height = size + 'px';
+                
+                conf.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                document.body.appendChild(conf);
+                
+                // Dọn dẹp DOM
+                setTimeout(() => conf.remove(), 5000);
+            }
+        }
+
+        // Khởi động
+        window.onload = initGame;
+
+    </script>
+</body>
+</html>
